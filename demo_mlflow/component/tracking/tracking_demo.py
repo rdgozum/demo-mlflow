@@ -1,5 +1,6 @@
 import mlflow
 from mlflow.tracking import MlflowClient
+from mlflow.exceptions import MlflowException
 import pandas as pd
 from pathlib import Path
 
@@ -11,7 +12,13 @@ class TrackingDemo:
     def initialize_experiment(self):
         mlflow.set_tracking_uri("file://" + TRACKING_PATH.as_posix())
 
-        self.experiment_id = mlflow.create_experiment(EXPERIMENT_NAME)
+        try:
+            self.experiment_id = mlflow.create_experiment(EXPERIMENT_NAME)
+        except MlflowException:
+            self.experiment_id = mlflow.get_experiment_by_name(
+                EXPERIMENT_NAME
+            ).experiment_id
+            # mlflow.set_experiment(self.experiment_id)
         self.runs = []
 
     def log(self, run_name, **items_dict):
@@ -50,11 +57,11 @@ class TrackingDemo:
 
         # View runs information
         df = pd.DataFrame(
-            {"Run ID": all_runs_id, "Params": all_params, "Metrics": all_metrics}
+            {"run_ids": all_runs_id, "parameters": all_params, "metrics": all_metrics}
         )
 
         # Retrieve artifact from best run
-        best_run_id = df.sort_values("Metrics", ascending=False).iloc[0]["Run ID"]
+        best_run_id = df.sort_values("metrics", ascending=False).iloc[0]["run_ids"]
         best_model_path = client.download_artifacts(best_run_id, "classifier")
         best_model = mlflow.sklearn.load_model(best_model_path)
 
