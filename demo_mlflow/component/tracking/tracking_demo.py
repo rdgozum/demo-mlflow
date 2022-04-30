@@ -65,7 +65,8 @@ class TrackingDemo:
         best_model_path = client.download_artifacts(best_run_id, "classifier")
         best_model = mlflow.sklearn.load_model(best_model_path)
 
-        print(df.head())
+        print(df.sort_values("metrics", ascending=False))
+        print(best_model_path)
         print(type(best_model))
         print(best_model.get_params())
 
